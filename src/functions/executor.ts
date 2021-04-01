@@ -1,20 +1,16 @@
 "use strict";
 
 import { platform, tmpdir } from "os";
-import { writeFileSync, unlinkSync, mkdirSync, rmdirSync } from "fs";
+import { writeFileSync, mkdirSync, rmdirSync } from "fs";
 import { exec } from "child_process";
-import { Language, Environment } from "./constants";
-import path from "path";
-
-const uniqueFilename = require("unique-filename");
-
-function parseEnvironment(platform: string): Environment {
-  if (platform === "win32") {
-    return Environment.WIN;
-  } else {
-    return Environment.UNIX;
-  }
-}
+import {
+  Language,
+  Environment,
+  IExecuteOptions,
+  defaultExecutionTimeout,
+} from "../constants";
+import { join } from "path";
+import { parseEnvironment } from "./environment";
 
 /**
  *
@@ -28,38 +24,39 @@ export default async function execute(
   input: string,
   language: Language,
   args: string[] = [],
-  stdin: string = ""
+  stdin: string = "",
+  options: IExecuteOptions = { timeout: defaultExecutionTimeout }
 ): Promise<string> {
   // Check Platform
   const env = parseEnvironment(platform());
 
   const id = new Date().getTime() + "_" + Math.floor(Math.random() * 10000);
 
-  const tempFolder: string = path.join(tmpdir(), id);
-
+  const tempFolder: string = join(tmpdir(), id);
 
   try {
     mkdirSync(tempFolder);
     writeFileSync(`${tempFolder}/code.code`, input);
-    writeFileSync(`${tempFolder}/args.args`, env == Environment.WIN ? args.join(" "): args.join("\n"));
+    writeFileSync(
+      `${tempFolder}/args.args`,
+      env == Environment.WIN ? args.join(" ") : args.join("\n")
+    );
     writeFileSync(`${tempFolder}/stdin.stdin`, stdin);
+    writeFileSync(
+      `${tempFolder}/timeout.timeout`,
+      (options.timeout || defaultExecutionTimeout).toString()
+    );
   } catch (e) {
     throw e;
   }
-
-  // Write File to temp folder
-  // if (language == Language.C) temppath += ".c";
-  // else if (language == Language.BATCH) temppath += ".bat";
-  // else if (language == Language.CPP) temppath += ".c";
-  // else if (language == Language.GO) temppath += ".go";
-  // writeFileSync(temppath, input, { encoding: "utf-8" });
 
   var command = env === Environment.WIN ? "" : "sh";
   var filetype = env === Environment.WIN ? "bat" : "sh";
 
   // Path to runner file
-  var runnerpath = path.join(
+  var runnerpath = join(
     __dirname,
+    "..",
     "..",
     "runners",
     env,
@@ -69,11 +66,16 @@ export default async function execute(
   // Execute code
   return new Promise<string>((resolve, reject) => {
     // if username has a space in it
-    var runcmd = env == Environment.WIN ? `${command} "${runnerpath}" ${tempFolder}` : `${command} ${runnerpath} ${tempFolder}`;
+    var runcmd =
+      env == Environment.WIN
+        ? `${command} "${runnerpath}" ${tempFolder}`
+        : `${command} ${runnerpath} ${tempFolder}`;
     // run command
     exec(runcmd, (err, stdout, stderr) => {
       // Delete created folder
-      rmdirSync(tempFolder, { recursive: true });
+      try {
+        rmdirSync(tempFolder, { recursive: true });
+      } catch (e) {}
 
       if (stderr) {
         // Remove newline from stderr

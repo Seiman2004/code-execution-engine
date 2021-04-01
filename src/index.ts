@@ -1,9 +1,6 @@
 "use strict";
 
-import executer from "./executor";
-import { Language } from "./constants";
-import lxc from "./lxc";
-
-export const languages = Language;
-export const execute = executer;
-export const LXC = lxc;
+export { Language as languages } from "./constants";
+export { default as execute } from "./functions/executor";
+export { default as LXC } from "./lxc";
+export { default as getSupportedLanguages } from "./functions/supported-languages";

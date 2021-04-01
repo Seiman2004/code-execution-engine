@@ -4,3 +4,5 @@ _config.yml
 .github/
 runners/lxc/i
 runners/lxc/lockfile
+CNAME
+SECURITY.md

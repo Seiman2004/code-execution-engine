@@ -8,19 +8,21 @@ A fast and secure Code-Execution-Engine in Javascript.
 
 ## Table of Contents
 
-[Installation](#installation)
+- [Installation](#installation)
 
-[Usage](#usage)
+- [Usage](#usage)
 
-[Supported Languages](#supported-languages)
+- [Supported Languages](#supported-languages)
 
-[Security](#security)
+- [Security](#security)
 
-[LXC](#lxc)
+- [LXC](#lxc)
 
-[Contributing](#contributing)
+- [Contributing](#contributing)
 
-[License](#license)
+- [Credits](#credits)
+
+- [License](#license)
 
 <a name="installation"/>
 
@@ -32,6 +34,12 @@ Use the package manager [npm](https://www.npmjs.com) to install Code-Execution-E
 $ npm install code-execution-engine
 ```
 
+Or use the [yarn](https://yarnpkg.com) package manager.
+
+```bash
+$ yarn add code-execution-engine
+```
+
 <a name="usage"/>
 
 ## Usage
@@ -40,7 +48,9 @@ $ npm install code-execution-engine
 const cee = require("code-execution-engine");
 
 cee
-  .execute("print('Hello World')", cee.languages.PYTHON3)
+  .execute("print('Hello World')", cee.languages.PYTHON3, [], "", {
+    timeout: 5,
+  })
   .then((result) => {
     console.log(result);
   })
@@ -49,17 +59,31 @@ cee
   });
 ```
 
-### execute(_input_, _language_) → Promise&lt;String&gt;
+### execute(_input_, _language_, [_args_], [_stdin_], [_options_]) → Promise&lt;String&gt;
 
 Returns the result (stdout) of the executed code. If stderr is not empty, an exception will be thrown with the content of stderr.
 
-_input_: string – The code you want to execute.
+**_input_**: string – The source code that should be executed.
 
-_language_: cee.Language – Pass the language the code is written in, for example `cee.languages.PYTHON3`. [Supported Lanuages](#supported-languages)
+**_language_**: cee.Language – Pass the language the code is written in, for example, `cee.languages.PYTHON3`. [Supported Lanuages](#supported-languages)
+
+**_args_**: string[] - Command-Line arguments that are passed to the script
+
+**_stdin_**: string - Set the stdin for the script
+
+**_options_**: IExecuteOptions
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_timeout_: number - Max execution time of the script. This option doesn't work on windows. Defaults to `5`
 
 <a name="supported-languages"/>
 
 ## Supported Languages
+
+Get the supported languages on your platform by calling
+
+```js
+cee.getSupportedLanguages();
+```
 
 |              | Linux / MacOS | Windows |
 | :----------: | :-----------: | :-----: |
@@ -87,8 +111,13 @@ const cee = require("code-execution-engine");
 
 const executor = new cee.LXC("[NAME OF YOUR LXC-CONTAINER]");
 
-// Run this line after the installation of the container
-executor.init();
+// Run this function after the installation of the container
+executor.init({
+  runners: 150,
+  // limitations per runner
+  maxProcesses: 64,
+  maxFiles: 2048,
+});
 
 executor
   .execute("echo 'Im in a secure environment!'", cee.languages.BASH)
@@ -100,13 +129,13 @@ executor
   });
 ```
 
-To use LXC, follow the instructions below to setup LXC.
+To use LXC, follow the instructions below to set up LXC.
 
 <a name="lxc"/>
 
 ## LXC
 
-LXC are Linux containers, that run the code in a different and secure environment. To use them, you need to install them first. LXC are only available on Linux-Systems.
+LXC's are Linux containers, that run the code in a different and secure environment. To use them, you need to install them first. LXC's are only available on Linux-Systems.
 
 To use this package with LXC, you need to install an unprivileged container.
 
@@ -119,6 +148,12 @@ To use this package with LXC, you need to install an unprivileged container.
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
+
+<a name="credits"/>
+
+## Credits
+
+Inspired by: [engineer-man/piston](https://github.com/engineer-man/piston)
 
 <a name="license"/>
 

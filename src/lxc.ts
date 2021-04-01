@@ -1,9 +1,15 @@
 "use strict";
 
 import { exec } from "child_process";
-import { mkdirSync, writeFileSync, readFileSync, chmodSync } from "fs";
+import { mkdirSync, writeFileSync, readFileSync } from "fs";
 import { platform } from "os";
-import { Language } from "./constants";
+import {
+  defaultExecutionTimeout,
+  defaultLxcInitOptions,
+  IExecuteOptions,
+  ILxcInitOptions,
+  Language,
+} from "./constants";
 
 class LXC {
   LXC_ROOT_FS: string;
@@ -33,9 +39,12 @@ class LXC {
   }
 
   /**
-   * Run this function the first time, after installing the container
+   * Run this function the first time, after installing the container. Please be patient, this could take a while
+   *
+   * @param options Pass options for the initialization to the function.
+   * @returns
    */
-  init() {
+  init(options: ILxcInitOptions = defaultLxcInitOptions) {
     try {
       // Copy .sh file to correct location
       const shFile = readFileSync(
@@ -51,7 +60,11 @@ class LXC {
 
     return new Promise<string>((resolve, reject) => {
       exec(
-        `lxc-attach --clear-env -n cee -- bash /tmp/lxc-init.bash`,
+        `lxc-attach --clear-env -n cee -- bash /tmp/lxc-init.bash ${
+          options.runners || defaultLxcInitOptions.runners
+        } ${options.maxProcesses || defaultLxcInitOptions.maxProcesses} ${
+          options.maxFiles || defaultLxcInitOptions.maxFiles
+        }`,
         (err, stdout, stderr) => {
           if (err) return reject(err);
           if (stderr) return reject(stderr);
@@ -77,7 +90,8 @@ class LXC {
     input: string,
     language: Language,
     args: string[] = [],
-    stdin: string = ""
+    stdin: string = "",
+    options: IExecuteOptions = { timeout: defaultExecutionTimeout }
   ) {
     const id = new Date().getTime() + "_" + Math.floor(Math.random() * 10000);
 
@@ -86,6 +100,10 @@ class LXC {
       writeFileSync(`${this.LXC_ROOT_FS}/tmp/${id}/code.code`, input);
       writeFileSync(`${this.LXC_ROOT_FS}/tmp/${id}/args.args`, args.join("\n"));
       writeFileSync(`${this.LXC_ROOT_FS}/tmp/${id}/stdin.stdin`, stdin);
+      writeFileSync(
+        `${this.LXC_ROOT_FS}/tmp/${id}/timeout.timeout`,
+        (options.timeout || defaultExecutionTimeout).toString()
+      );
 
       // Copy .sh file to correct location
       const shFile = readFileSync(

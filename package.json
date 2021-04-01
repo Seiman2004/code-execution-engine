@@ -1,6 +1,6 @@
 {
   "name": "code-execution-engine",
-  "version": "0.2.2",
+  "version": "0.4.4",
   "description": "A fast and secure Code-Execution-Engine in Javascript.",
   "main": "lib/index.js",
   "types": "./lib/index.d.ts",
@@ -29,7 +29,6 @@
   },
   "homepage": "https://github.com/simonkoeck/code-execution-engine#readme",
   "dependencies": {
-    "unique-filename": "^1.1.1",
     "@types/node": "^14.14.36"
   }
 }
